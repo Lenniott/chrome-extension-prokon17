@@ -1,6 +1,14 @@
 /* content.css */
-.highlighted {
-  background-color: yellow;
+.argument {
+  background-color: lightskyblue;
+  font-weight: bold;
+  color: black;
+  padding: 2px;
+  border-radius: 3px;
+}
+
+.counterArgument {
+  background-color: lightcoral;
   font-weight: bold;
   color: black;
   padding: 2px;
