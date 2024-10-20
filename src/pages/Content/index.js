@@ -1,6 +1,6 @@
 import { printLine } from './modules/print';
 
-console.log('Content script works!');
+console.log('Content bitch script works!');
 console.log('Must reload extension for modifications to take effect.');
 
 printLine("Using the 'printLine' function from the Print Module");
@@ -68,7 +68,71 @@ function highlightText(searchObject) {
 }
 
 // Example usage:
-highlightText({
-  catagory: 'counterArgument',
-  text: 'new skills and information',
-});
+// highlightText({
+//   catagory: 'counterArgument',
+//   text: 'new skills and information',
+// });
+
+class PageChunker {
+  constructor(chunkSize = 125, overlapSize = 25) {
+    this.chunkSize = chunkSize;
+    this.overlapSize = overlapSize;
+  }
+
+  // Function to get page content
+  getPageContent() {
+    return document.getElementsByTagName('body')[0].textContent || '';
+  }
+
+  // Function to chunk content with overlap
+  chunkContentWithOverlap(content) {
+    const words = content.split(' ');
+    const chunks = [];
+
+    let chunkId = 0;
+    let start = 0;
+
+    while (start < words.length) {
+      const end = Math.min(start + this.chunkSize, words.length);
+      const chunkText = words.slice(start, end).join(' ');
+
+      chunks.push({ id: chunkId, text: chunkText });
+
+      // Move the start forward by chunkSize, but with overlap
+      start += this.chunkSize - this.overlapSize;
+      chunkId++;
+    }
+
+    return chunks;
+  }
+}
+
+function checkAndStoreUrlContent(store) {
+  const { url, chunks } = store;
+
+  // Check if the storage contains any stored URLs
+  chrome.storage.local.get(['urlContent'], (result) => {
+    let urlContent = result.urlContent || [];
+
+    // Check if the URL is already stored in the correct format
+    const existingEntry = urlContent.find((entry) => entry.url === url);
+
+    if (!existingEntry) {
+      // URL not in storage, so store it in the desired format
+      urlContent.push({ url: url, chunks: chunks });
+      chrome.storage.local.set({ urlContent }, () => {
+        console.log(`Stored content for URL: ${url}`);
+      });
+    } else {
+      console.log(`Content already stored for URL: ${url}`);
+    }
+  });
+}
+
+const chunker = new PageChunker();
+const content = chunker.getPageContent();
+const chunks = chunker.chunkContentWithOverlap(content);
+const url = window.location.href;
+
+const store = { url: url, chunks: chunks };
+checkAndStoreUrlContent(store);

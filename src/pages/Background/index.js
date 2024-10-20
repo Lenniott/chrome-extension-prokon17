@@ -30,7 +30,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     async function main(content) {
       try {
         const openaiApiKey = await getOpenAIKey();
-
         const openai = new OpenAI({
           apiKey: openaiApiKey,
           dangerouslyAllowBrowser: true,
@@ -64,12 +63,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           const messages = await openai.beta.threads.messages.list(
             run.thread_id
           );
-          for (const message of messages.data.reverse()) {
-            // Add a fallback for the content structure
-            const text =
-              message.content[0]?.text?.value || 'No content available';
-            console.log(`${message.role} > ${text}`);
-          }
+          const messageContent =
+            messages.data[0]?.content[0]?.text?.value || '{}';
+          const jsonResponse = JSON.parse(messageContent); // Parse the JSON response
+          console.log('Parsed Response:', jsonResponse);
+
+          // You can now use jsonResponse as an object
+          return jsonResponse;
         } else {
           console.log(`Run ended with status: ${run.status}`);
         }
