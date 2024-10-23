@@ -5,3 +5,79 @@ body {
 .container {
   color: #ffffff;
 }
+
+.accordion {
+  border: 1px solid #e5e7eb; /* Tailwind grey-200 */
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.accordion-header {
+  margin: 0;
+}
+
+.accordion-button {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem;
+  background-color: #f9fafb; /* Tailwind grey-50 */
+  cursor: pointer;
+  font-size: 1rem;
+  border: none;
+  text-align: left;
+  font-weight: bold;
+}
+
+.accordion-button:focus {
+  outline: 3px solid #2563eb; /* Tailwind blue-600 */
+}
+
+.accordion-icon {
+  font-size: 1.5rem;
+}
+
+.accordion-content {
+  padding: 1rem;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.accordion-content.open {
+  max-height: 100vh; /* Allow content to expand */
+}
+
+.accordion-content.closed {
+  max-height: 0;
+}
+
+button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+li {
+  margin: 0;
+  padding: 0;
+}
+
+.pro {
+  padding: 0.5rem;
+  border: 1px solid white;
+}
+
+.kon {
+  padding: 0.5rem;
+  border: 1px solid white;
+}

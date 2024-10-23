@@ -88,6 +88,16 @@ const Options: React.FC<Props> = ({ title }: Props) => {
     }
   }, []);
 
+  function clearStorage() {
+    chrome.storage.local.remove('urlContent', () => {
+      if (chrome.runtime.lastError) {
+        console.error('Error clearing URL content:', chrome.runtime.lastError);
+      } else {
+        console.log('URL content cleared from storage.');
+      }
+    });
+  }
+
   return (
     <div className="OptionsContainer">
       <main>
@@ -106,6 +116,10 @@ const Options: React.FC<Props> = ({ title }: Props) => {
           Log Key
         </button>
         <div id="response">{apiKey}</div>
+
+        <button id="clearStorage" onClick={clearStorage}>
+          Clear Url Storage
+        </button>
       </main>
     </div>
   );
