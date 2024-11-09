@@ -53,9 +53,9 @@ function checkAndStoreUrlContent(store) {
     }
   });
 }
-// Add a listener for the "prokonSent" message
+// Add a listener for the "addNewProkon" message
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'prokonSent') {
+  if (request.action === 'addNewProkon') {
     const newContent = request.message; // Get the message from the request
 
     async function getOpenAIKey() {

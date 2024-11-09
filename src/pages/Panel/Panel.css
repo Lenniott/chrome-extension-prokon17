@@ -72,12 +72,15 @@ li {
   padding: 0;
 }
 
-.pro {
+.prokon-object {
   padding: 0.5rem;
   border: 1px solid white;
 }
 
+.pro {
+  background-color: rgb(161, 181, 161);
+}
+
 .kon {
-  padding: 0.5rem;
-  border: 1px solid white;
+  background-color: lightblue;
 }

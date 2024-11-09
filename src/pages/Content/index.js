@@ -136,3 +136,15 @@ const url = window.location.href;
 
 const store = { url: url, chunks: chunks };
 checkAndStoreUrlContent(store);
+
+// Listen for messages from the panel
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('give me url please');
+  if (request.action === 'getUrl') {
+    // Get the current page URL
+    const currentUrl = window.location.href;
+    console.log(currentUrl);
+    // Send the URL back to the panel
+    chrome.runtime.sendMessage({ action: 'sendUrl', url: currentUrl });
+  }
+});
