@@ -7,12 +7,38 @@ chrome.sidePanel
   .catch((error) => console.error('Error setting panel behavior:', error));
 
 const asst = 'asst_Uz2LyFXaQHYdLLP3NeQDPlio';
+const stanceAsst = 'asst_3vX0w4ypuiqQn7XTwdMOlP0y';
+
+function sanitiseJSON(jsonString) {
+  // Ensure jsonString is defined and is a string
+  if (typeof jsonString !== 'string') {
+    console.error('Invalid input: jsonString is not a string.');
+    return null;
+  }
+
+  try {
+    // Escape single quotes in string values to prevent parsing errors
+    jsonString = jsonString.replace(/\\'/g, "'"); // handle pre-escaped single quotes
+    jsonString = jsonString.replace(/(?<!\\)'/g, "\\'"); // escape unescaped single quotes
+
+    // Trim whitespace
+    jsonString = jsonString.trim();
+
+    // Attempt to parse to validate JSON format
+    JSON.parse(jsonString);
+
+    return jsonString; // Return sanitised JSON string if valid
+  } catch (error) {
+    console.error('Failed to sanitise JSON:', error);
+    return null; // Return null if sanitisation fails
+  }
+}
 
 // Add a listener for the "prokonSent" message
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'prokonSent') {
     const newContent = request.message; // Get the message from the request
-
+    let prokon;
     async function getOpenAIKey() {
       return new Promise((resolve, reject) => {
         chrome.storage.local.get(['openaiApiKey'], (result) => {
@@ -64,11 +90,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           const messages = await openai.beta.threads.messages.list(
             run.thread_id
           );
-          for (const message of messages.data.reverse()) {
-            // Add a fallback for the content structure
-            const text =
-              message.content[0]?.text?.value || 'No content available';
-            console.log(`${message.role} > ${text}`);
+          const message = messages.data[0];
+
+          const text =
+            message.content[0]?.text?.value || 'No content available';
+
+          try {
+            const sanitiseText = sanitiseJSON(text);
+            const jsonObject = JSON.parse(sanitiseText);
+            prokon = jsonObject;
+            // Send the prokon data back to the panel
+            chrome.runtime.sendMessage({
+              action: 'prokonData',
+              data: prokon,
+            });
+          } catch (error) {
+            console.error('Failed to parse JSON:', error);
           }
         } else {
           console.log(`Run ended with status: ${run.status}`);
@@ -77,9 +114,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.error('Error:', error);
       }
     }
-
     main(newContent);
-
-    sendResponse({ status: 'success' });
+    console.log('prokon: ', prokon);
+    sendResponse({ status: 'success', response: prokon });
   }
 });

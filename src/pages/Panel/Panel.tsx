@@ -6,9 +6,25 @@ const Panel: React.FC = () => {
 
   const handleSend = () => {
     // Send the message "prokonSent"
-    chrome.runtime.sendMessage({ action: 'prokonSent', message });
-    setMessage(''); // Clear the text area after sending
+    chrome.runtime.sendMessage(
+      { action: 'prokonSent', message },
+      (response) => {
+        if (response && response.status === 'success') {
+          alert('Message sent successfully!');
+        } else {
+          alert('Failed to send message.');
+        }
+      }
+    );
+    // Clear the text area after sending
   };
+
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.action === 'prokonData') {
+      console.log('Received prokon data:', message.data);
+      // Handle the received prokon data as needed in the panel
+    }
+  });
 
   return (
     <div className="container">
