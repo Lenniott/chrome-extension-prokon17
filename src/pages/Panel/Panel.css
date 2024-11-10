@@ -4,4 +4,26 @@ body {
 
 .container {
   color: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.container.large {
+  gap: 1rem;
+  padding: 0.5rem;
+  border-radius: 0.5;
+}
+
+.container.medium {
+  gap: 0.5rem;
+  border-radius: 0.25;
+}
+
+.container.small {
+  gap: 0.25rem;
+  border-radius: 0.125;
+}
+
+textarea {
+  height: 4rem;
 }

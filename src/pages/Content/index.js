@@ -67,8 +67,16 @@ function highlightText(searchObject) {
   }
 }
 
-// Example usage:
-highlightText({
-  catagory: 'counterArgument',
-  text: 'new skills and information',
+// // Example usage:
+// highlightText({
+//   catagory: 'counterArgument',
+//   text: 'new skills and information',
+// });
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'getPageContent') {
+    // Extract page content and send it back to the background script
+    const pageContent = document.body.innerText;
+    sendResponse({ content: pageContent });
+  }
 });
