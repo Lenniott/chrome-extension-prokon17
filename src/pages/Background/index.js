@@ -95,10 +95,12 @@ async function getEmbeddings(openai, chunks) {
     try {
       console.log('Getting embedding for chunk:', chunk.slice(0, 50), '...');
       const response = await openai.embeddings.create({
-        model: 'text-embedding-ada-002',
+        model: 'text-embedding-3-small',
         input: chunk,
+        encoding_format: 'float',
       });
-      embeddings.push(response.data[0].embedding);
+      response.text = chunk;
+      embeddings.push(response);
       console.log('Successfully retrieved embedding.');
     } catch (error) {
       console.error('Error getting embedding for chunk:', error);
@@ -106,6 +108,13 @@ async function getEmbeddings(openai, chunks) {
   }
   console.log(`Retrieved ${embeddings.length} embeddings.`);
   return embeddings;
+}
+
+function sendLogToPanel(message) {
+  chrome.runtime.sendMessage({
+    action: 'logUpdate',
+    data: { message },
+  });
 }
 
 function cosineSimilarity(vecA, vecB) {
@@ -124,7 +133,7 @@ function cosineSimilarity(vecA, vecB) {
 async function semanticSearch(embeddings, queryEmbedding) {
   console.log('Performing semantic search for the given query embedding.');
   const similarities = embeddings.map((embedding) => {
-    return cosineSimilarity(embedding, queryEmbedding);
+    return cosineSimilarity(embedding.data[0].embedding, queryEmbedding);
   });
 
   // Sort the similarities in descending order and return the top results
@@ -137,7 +146,9 @@ async function semanticSearch(embeddings, queryEmbedding) {
   console.log(
     `Semantic search completed. Top ${topResults.length} results selected.`
   );
-  return topResults.map((index) => embeddings[index]);
+  const finalResults = topResults.map((index) => embeddings[index]);
+  console.log(finalResults);
+  return finalResults;
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -156,7 +167,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         const myAssistant = await openai.beta.assistants.retrieve(asst);
         console.log('Retrieved Assistant:', myAssistant);
-
+        sendLogToPanel('Getting prokon assistant...');
         // Step 1: Create the thread explicitly
         const thread = await openai.beta.threads.create({
           messages: [
@@ -167,7 +178,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           ],
         });
         console.log('Thread created:', thread);
-
+        sendLogToPanel('Creating thread...');
         // Step 2: Run the assistant on the created thread
         const run = await openai.beta.threads.runs.createAndPoll(thread.id, {
           assistant_id: asst,
@@ -189,6 +200,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             console.log('Parsed prokon object:', prokon);
 
+            sendLogToPanel('Getting page content...');
             // Get the content of the current page
             const pageContent = await getPageContent();
 
@@ -197,13 +209,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             const overlap = 50;
             const chunks = chunkText(pageContent, chunkSize, overlap);
 
+            sendLogToPanel('Translating...');
             // Get embeddings for the chunks
             const embeddings = await getEmbeddings(openai, chunks);
-
+            console.log(embeddings);
             // Perform similarity search for argument and counterArgument
             console.log('Performing similarity search for argument.');
+            sendLogToPanel('Performing similarity search for argument...');
             const argumentEmbedding = await openai.embeddings.create({
-              model: 'text-embedding-ada-002',
+              model: 'text-embedding-3-small',
               input: prokon.argument,
             });
             const argumentResultsIndices = await semanticSearch(
@@ -215,8 +229,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             );
 
             console.log('Performing similarity search for counterArgument.');
+            sendLogToPanel(
+              'Performing similarity search for counterArgument...'
+            );
             const counterArgumentEmbedding = await openai.embeddings.create({
-              model: 'text-embedding-ada-002',
+              model: 'text-embedding-3-small',
               input: prokon.counterArgument,
             });
             const counterArgumentResultsIndices = await semanticSearch(
@@ -229,6 +246,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             // Send argument and counterArgument results to stance assistant
             console.log('Sending argument results to stance assistant.');
+            sendLogToPanel('Sending argument results to stance assistant...');
             const stanceArgumentThread = await openai.beta.threads.create({
               messages: [
                 {
@@ -256,6 +274,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
               await openai.beta.threads.messages.list(stanceArgumentThread.id);
 
             console.log('Sending counterArgument results to stance assistant.');
+            sendLogToPanel(
+              'Sending counterArgument results to stance assistant...'
+            );
             const stanceCounterArgumentThread =
               await openai.beta.threads.create({
                 messages: [
@@ -284,7 +305,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
               await openai.beta.threads.messages.list(
                 stanceCounterArgumentThread.id
               );
-
+            sendLogToPanel('Compling results...');
             // Add the stance results to the prokon object
             console.log('Adding stance results to the prokon object.');
             prokon.argument = {
@@ -299,12 +320,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 text: msg.content,
               })),
             };
-
+            sendLogToPanel('Finishing up...');
             // Send the prokon data back to the panel
-            console.log('Sending prokon data back to the panel.');
+            console.log('Sending prokon data back to the panel.', prokon);
             chrome.runtime.sendMessage({
               action: 'prokonData',
               data: prokon,
+            });
+            chrome.runtime.sendMessage({
+              action: 'loadingComplete',
             });
           } catch (error) {
             console.error('Failed to parse JSON:', error);

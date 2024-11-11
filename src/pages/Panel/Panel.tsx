@@ -1,18 +1,58 @@
 import React, { useEffect, useState } from 'react';
 import './Panel.css';
 
-type Prokon = {
-  argument: string;
-  counterArgument: string;
-};
+class Prokon {
+  id: string;
+  title: string;
+  argument: ArgumentWithResults;
+  counterArgument: ArgumentWithResults;
+
+  constructor(
+    id: string,
+    title: string,
+    argument: ArgumentWithResults,
+    counterArgument: ArgumentWithResults
+  ) {
+    this.id = id;
+    this.title = title;
+    this.argument = argument;
+    this.counterArgument = counterArgument;
+  }
+}
+
+class ArgumentWithResults {
+  text: string;
+  results: Statement[];
+
+  constructor(text: string, results: any) {
+    this.text = text;
+    this.results = results.map((result: any) => {
+      // Parse the text data from JSON structure
+      if (Array.isArray(result.text) && result.text.length > 0) {
+        const parsed = JSON.parse(result.text[0].text.value || '{}');
+        return new Statement(parsed.argument || '');
+      }
+      return new Statement(result.text || '');
+    });
+  }
+}
+
+class Statement {
+  text: string;
+
+  constructor(text: string) {
+    this.text = text;
+  }
+}
 
 type StatusLogsProps = {
   logs: string[];
 };
 
-const LoadingWheel: React.FC = () => (
+const LoadingWheel: React.FC<StatusLogsProps> = ({ logs }) => (
   <div className="loading-wheel">
     <div className="spinner"></div>
+    <p>{`${logs.length + (1 / 11) * 100}%`}</p>
   </div>
 );
 
@@ -41,7 +81,22 @@ const Panel: React.FC = () => {
         setLoading(false);
       } else if (message.action === 'prokonData') {
         console.log('Received prokon data:', message.data);
-        setProkon(message.data);
+
+        // Parse prokon data into Prokon class
+        const parsedProkon = new Prokon(
+          message.data.id,
+          message.data.title,
+          new ArgumentWithResults(
+            message.data.argument.text,
+            message.data.argument.results
+          ),
+          new ArgumentWithResults(
+            message.data.counterArgument.text,
+            message.data.counterArgument.results
+          )
+        );
+
+        setProkon(parsedProkon);
       }
     };
 
@@ -84,18 +139,28 @@ const Panel: React.FC = () => {
         <button onClick={handleSend}>Prokon</button>
       </div>
 
-      {loading && <LoadingWheel />}
+      {loading && <LoadingWheel logs={logs} />}
       <StatusLogs logs={logs} />
 
       {prokon && (
         <div id="prokon" className="container medium">
           <div className="container small">
             <label>Argument</label>
-            <div id="pro">{prokon.argument}</div>
+            <div id="pro">{prokon.argument.text}</div>
+            <ul>
+              {prokon.argument.results.map((result, index) => (
+                <li key={`argument-result-${index}`}>{result.text}</li>
+              ))}
+            </ul>
           </div>
           <div className="container small">
             <label>Counter Argument</label>
-            <div id="pro">{prokon.counterArgument}</div>
+            <div id="pro">{prokon.counterArgument.text}</div>
+            <ul>
+              {prokon.counterArgument.results.map((result, index) => (
+                <li key={`counterArgument-result-${index}`}>{result.text}</li>
+              ))}
+            </ul>
           </div>
         </div>
       )}
