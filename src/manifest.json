@@ -7,7 +7,7 @@
   "side_panel": {
     "default_path": "panel.html"
   },
-  "permissions": ["sidePanel", "contextMenus", "storage"],
+  "permissions": ["sidePanel", "contextMenus", "storage", "activeTab", "tabs"],
   "action": {
     "default_title": "Click to open panel",
     "default_icon": "icon-34.png"
