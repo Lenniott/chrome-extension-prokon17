@@ -131,6 +131,6 @@ Prokon helps users:
 - Identify potential biases in content
 - Make more informed decisions based on comprehensive understanding of different viewpoints
 
-##Current Status
+## Current Status
 - inactive
 I got to a good point in the project where I understood what needed to be done but technically I havent found the time to get my head around the technical implementation of it. Writing the acutal code in sequence. I got destracted by click through project :/
